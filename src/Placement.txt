@@ -1,0 +1,110 @@
+					
+						Cloud Programming Assignment 1
+					-----------------------------------------------
+
+Task 1 :
+The source code zip file for this task is attached with the name WordCount.zip
+
+To Run :
+A jar with the name wordCount.jar is attached, which can be directly uploaded to amazon s3 and execute against any input file.
+
+Output Links : 
+
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00004
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00005
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00006
+
+
+
+Task 2 :
+The source code zip file for this task is attached with the name WordCount2.zip
+
+To Run :
+A jar with the name WordCount2.jar is attached, which can be directly uploaded to amazon s3 and execute against any input file.
+
+Output links
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00004
+
+
+
+Task 3 :
+The source code zip file for this task is attached with the name WordCountWithDistributedCache.zip
+
+To Run :
+A jar with the name WordCountWithDistCache.jar is attached, which can be directly uploaded to amazon s3 and execute against any input and pattern file.
+Note : Intput file should be 1st argument, output file 2nd and patterns file 3rd argument.
+
+Output links
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00004
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00005
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00006
+
+
+
+
+
+
+
+Task 1 :
+The source code zip file for this task is attached with the name WordCount.zip
+
+To Run :
+A jar with the name wordCount.jar is attached, which can be directly uploaded to amazon s3 and execute against any input file.
+
+Output Links : 
+
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00004
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00005
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output/part-00006
+
+
+
+Task 2 :
+The source code zip file for this task is attached with the name WordCount2.zip
+
+To Run :
+A jar with the name WordCount2.jar is attached, which can be directly uploaded to amazon s3 and execute against any input file.
+
+Output links
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output4/part-00004
+
+
+
+Task 3 :
+The source code zip file for this task is attached with the name WordCountWithDistributedCache.zip
+
+To Run :
+A jar with the name WordCountWithDistCache.jar is attached, which can be directly uploaded to amazon s3 and execute against any input and pattern file.
+Note : Intput file should be 1st argument, output file 2nd and patterns file 3rd argument.
+
+Output links
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00000
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00001
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00002
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00003
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00004
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00005
+https://s3-us-west-2.amazonaws.com/ravindrawordcount/Output/output3/part-00006
+
+
+
