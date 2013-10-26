@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.RepaintManager;
@@ -19,6 +20,7 @@ public class MasterNode {
 	private final static String FILE_NAME = "MapperFile.txt";
 	private final static String SEQ_FILE_NAME = "SequenceNumber.txt";
 	private final static String MASTER_TABLE = "MasterTable.txt";
+	private final static String SERVERS_FILE = "Server.txt";
 	
 	//Master node assigns unique fileDesc to each of the files in the system
 	
@@ -147,7 +149,7 @@ public class MasterNode {
 				File file = new File(MASTER_TABLE);
 				try {
 					//FileInputStream is = new FileInputStream();
-					BufferedWriter bw = new BufferedWriter(new FileWriter(file,false));
+					BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
 				    
 					StringBuilder sb = new StringBuilder();
 					
@@ -216,6 +218,32 @@ public class MasterNode {
 		}
 				
 			
+	}
+	
+	public List<String> getDistribution(String filename,int fd){
+		
+		//The file which stores all other servers ip address, and their server name looks like this
+		/*
+		 * server1	192.168.0.1
+		 * server2	192.168.0.2
+		 * server3	192.168.0.3
+		 */
+		
+		File file = new File(SERVERS_FILE);
+		List<String> ipList = new ArrayList<String>();
+		String line;
+		try{
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			while((line = br.readLine()) != null){
+				ipList.add(line);
+			}
+			br.close();
+		}catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return ipList;
 	}
 	
 }
