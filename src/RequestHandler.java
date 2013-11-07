@@ -20,7 +20,7 @@ import com.cloud.gatordrive.client.Client;
 
 public class RequestHandler {
 
-	private final static String SERVER_TABLE = "ServerTable.txt";
+	private final static String SERVER_TABLE = "/tmp/ServerTable.txt";
 	
 	private Split split;
 	private Merge merge;
@@ -35,11 +35,12 @@ public class RequestHandler {
 		this.username = username;
 	}
 
-	public void partitionFile(InputStream fis, String filename) {
-
+	public int partitionFile(InputStream fis, String filename) {
+		
 		int FD = master.fileDescGenerator();
 		
 		File orgFile = createFile(fis, filename);
+		System.out.println("Original file created");
 		long size = orgFile.length();
 		
 		try {
@@ -48,41 +49,55 @@ public class RequestHandler {
 			e.printStackTrace();
 		}
 		File repFile = replicateFile(fis, filename);
+		System.out.println("Replicated file created");
 		
 		File[] orgPartitions = split.splitFile(orgFile, size, 1024, "Original");
+		System.out.println("Original file partitions created");
 		size = repFile.length();
 		File[] repPartitions = split.splitFile(repFile, size, 1024, "Replicated");
-	
-		distributePartitions(filename, FD, orgPartitions, repPartitions);
+		System.out.println("Replicated file partitions created");
+		
+		return distributePartitions(filename, FD, orgPartitions, repPartitions);
 	}
 
 	public File createFile(InputStream fis, String filename) {
 
-		OutputStream outputStream = null;
+		//OutputStream outputStream = null;
 		File file = null;
-		
+		StringBuilder sb = new StringBuilder();
 		try {
-			file = new  File("/tmp/" + filename
-					+ "-" + ApplicationInfo.userID + "original" + ".txt");
-			outputStream = new FileOutputStream(file);
+			//file = new File("/tmp/" + filename + "-" + ApplicationInfo.userID
+			//		+ "original" + ".txt");
+			file = new File("/tmp/original" + filename);
+			// outputStream = new FileOutputStream(file);
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
 			int read = 0;
-			byte[] bytes = new byte[1024];
+			/*
+			 * byte[] bytes = new byte[1024];
+			 * 
+			 * while ((read = fis.read(bytes, 0, read)) != -1) {
+			 * outputStream.write(bytes); }
+			 */
 
-			while ((read = fis.read(bytes, 0, read)) != -1) {
-				outputStream.write(bytes);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+			String str = "";
+			while ((str = br.readLine()) != null) {
+				sb.append(str);
+				sb.append("\n");
 			}
+			bw.write(sb.toString());
+			br.close();
+			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			if (outputStream != null) {
-				try {
-					// outputStream.flush();
-					outputStream.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			}
+			sb = null;
+		} finally {/*
+					 * if (outputStream != null) { try { //
+					 * outputStream.flush(); outputStream.close(); } catch
+					 * (IOException e) { e.printStackTrace(); }
+					 * 
+					 * }
+					 */
 		}
 
 		return file;
@@ -90,23 +105,36 @@ public class RequestHandler {
 
 	public File replicateFile(InputStream fis, String filename) {
 
-		OutputStream outputStream = null;
+		//OutputStream outputStream = null;
 		File file = null;
-		
+		StringBuilder sb = new StringBuilder();
 		try {
 			
-			file = new File("/tmp/" + filename
-					+ "-" + ApplicationInfo.userID + "replicated" + ".txt");
-			outputStream = new FileOutputStream(file);
+			//file = new File("/tmp/" + filename
+			//		+ "-" + ApplicationInfo.userID + "replicated" + ".txt");
+			file = new File("/tmp/replicated" + filename);
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+			//outputStream = new FileOutputStream(file);
 			int read = 0;
+			/*
 			byte[] bytes = new byte[1024];
 
 			while ((read = fis.read(bytes, 0, read)) != -1) {
 				outputStream.write(bytes);
 			}
+			*/
+			BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+			String str = "";
+			while ((str = br.readLine()) != null) {
+				sb.append(str);
+				sb.append("\n");
+			}
+			bw.write(sb.toString());
+			br.close();
+			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
+		} finally {/*
 			if (outputStream != null) {
 				try {
 					// outputStream.flush();
@@ -116,14 +144,20 @@ public class RequestHandler {
 				}
 
 			}
+			*/
 		}
 
 		return file;
 	}
 
-	public void distributePartitions(String filename, int fd, File[] orgPartitions, File[] repPartitions) {
+	public int distributePartitions(String filename, int fd, File[] orgPartitions, File[] repPartitions) {
 		
 		List<String> serverList = master.getDistribution(filename, fd);
+		
+		System.out.println("FD = "+fd);
+		for(String s : serverList){
+			System.out.println("Server = "+s);
+		}
 		
 		int num = orgPartitions.length;
 		int perServer = (int)(num / serverList.size());
@@ -135,9 +169,12 @@ public class RequestHandler {
 		int count = 0;
 		int result;
 		
+		System.out.println("AAAA");
+		
 		//distribute orgPartitions
 		for(i = 0; i < serverList.size(); i++){
 			int high = count + perServer;
+			System.out.println("XXX");
 			for(int j = count; j < high; j++,count++){
 				result = client.sendPartition(fd, serverList.get(i),orgPartitions[j],j,num, username);
 				if(result == 1){
@@ -147,7 +184,7 @@ public class RequestHandler {
 				}
 			}
 		}
-		
+		System.out.println("BBBB");
 		for(int j = count; j < num; j++){
 			result = client.sendPartition(fd, serverList.get(i-1),orgPartitions[j],j,num, username);
 			if(result == 1){
@@ -158,6 +195,7 @@ public class RequestHandler {
 		}
 		
 		//distribute repPartitions
+		System.out.println("CCCC");
 		count = 0;
 		for(i = serverList.size() - 1; i <= 0; i--){
 			int high = count + perServer;
@@ -170,7 +208,7 @@ public class RequestHandler {
 				}
 			}
 		}
-		
+		System.out.println("DDDD");
 		for(int j = count; j < num; j++){
 			result = client.sendPartition(fd, serverList.get(i+1),repPartitions[j],j,num, username);
 			if(result == 1){
@@ -180,6 +218,7 @@ public class RequestHandler {
 			}
 		}
 		
+		return 1;
 	}
 
 	public void mergePartitions() {
