@@ -1,132 +1,135 @@
-package com.cloud.gatordrive.client;
-
+import java.awt.FileDialog;
+import java.awt.Frame;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
- 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.commons.logging.LogFactory;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.json.JSONObject;
 
 public class Client {
-	 /**
-     * A generic method to execute any type of Http Request and constructs a response object
-     * @param requestBase the request that needs to be exeuted
-     * @return server response as <code>String</code>
-     */
-    private static String executeRequest(HttpRequestBase requestBase){
-        String responseString = "" ;
- 
-        InputStream responseStream = null ;
-        HttpClient client = HttpClientBuilder.create().build();
-        try{
-            HttpResponse response = client.execute(requestBase) ;
-            if (response != null){
-                HttpEntity responseEntity = response.getEntity() ;
- 
-                if (responseEntity != null){
-                    responseStream = responseEntity.getContent() ;
-                    if (responseStream != null){
-                        BufferedReader br = new BufferedReader (new InputStreamReader (responseStream)) ;
-                        String responseLine = br.readLine() ;
-                        String tempResponseString = "" ;
-                        while (responseLine != null){
-                            tempResponseString = tempResponseString + responseLine + System.getProperty("line.separator") ;
-                            responseLine = br.readLine() ;
-                        }
-                        br.close() ;
-                        if (tempResponseString.length() > 0){
-                            responseString = tempResponseString ;
-                        }
-                    }
-                }
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally{
-            if (responseStream != null){
-                try {
-                    responseStream.close() ;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        client.getConnectionManager().shutdown() ;
- 
-        return responseString ;
-    }
- 
-    /**
-     * Method that builds the multi-part form data request
-     * @param urlString the urlString to which the file needs to be uploaded
-     * @param file the actual file instance that needs to be uploaded
-     * @param fileName name of the file, just to show how to add the usual form parameters
-     * @param fileDescription some description for the file, just to show how to add the usual form parameters
-     * @return server response as <code>String</code>
-     */
-    public String executeMultiPartRequest(String serverAddress, int fd, File file, String fileName, int partitionNum, int numOfParts, String username) {
-    	
-    	String urlString = "http://"+serverAddress+":8080/GatorDrive/upload";
-        HttpPost postRequest = new HttpPost (urlString) ;
-        try{
- 
-            MultipartEntity multiPartEntity = new MultipartEntity () ;
- 
-            //The usual form parameters can be added this way
-            //multiPartEntity.addPart("fileDescription", new StringBody(fileDescription != null ? fileDescription : "")) ;
-            multiPartEntity.addPart("fileName", new StringBody(fileName != null ? fileName : file.getName())) ;
-            multiPartEntity.addPart("fileDescriptor", new StringBody(fd+""));
-            multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
-            multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
-            multiPartEntity.addPart("username", new StringBody(username+""));
-            /*Need to construct a FileBody with the file that needs to be attached and specify the mime type of the file. Add the fileBody to the request as an another part.
-            This part will be considered as file part and the rest of them as usual form-data parts*/
-            FileBody fileBody = new FileBody(file, "application/octect-stream") ;
-            multiPartEntity.addPart("attachment", fileBody) ;
- 
-            postRequest.setEntity(multiPartEntity) ;
-        }catch (UnsupportedEncodingException ex){
-            ex.printStackTrace() ;
-        }
- 
-        return executeRequest (postRequest) ;
-    }
- 
-    public int sendPartition(int fd, String serverAddress, File filePartition, int partitionNumber, int numOfParts, String username) {
-    	
-    	String response = executeMultiPartRequest(serverAddress, fd, filePartition, 
-    			filePartition.getName(), partitionNumber, numOfParts, username) ;
-    	
-    	String[] tokens = response.split("=");
-    	return Integer.parseInt(tokens[1]);
-    	
-    }
-    
-    /*
-    public static void main(String args[]){
-    	Client fileUpload = new Client() ;
-        File file = new File ("/tmp/1111.docx") ;
- 
-        String response = fileUpload.executeMultiPartRequest("http://192.168.0.20:8080/Test/upload", file, file.getName(), "File Upload test Hydrangeas.jpg description") ;
-        System.out.println("Response : "+response);
-    }   
-    */
+
+	public static void main(String[] args) {
+
+		//String urlParameters = "param1=a&param2=b&param3=c";
+		//JSONObject json = new JSONObject();
+
+		Frame myFrame = new Frame();
+		try {
+			//json.put("filename", "Server.txt");
+			//json.put("param2", "gokak");
+
+			//String payload = json.toString();
+			
+			String filename = "test1.txt";
+
+			String request = "http://192.168.0.20:8080/GatorDrive/download/"+filename;
+			URL url = new URL(request);
+			HttpURLConnection connection = (HttpURLConnection) url
+					.openConnection();
+			connection.setDoOutput(true);
+			connection.setDoInput(true);
+			connection.setInstanceFollowRedirects(false);
+			connection.setRequestMethod("GET");
+			//connection.setRequestProperty("Content-Type",
+			//		"application/x-www-form-urlencoded");
+			connection.setRequestProperty("Content-Type","application/json");
+			connection.setRequestProperty("charset", "utf-8");
+			
+			//connection.setRequestProperty("Content-Length",
+			//		"" + Integer.toString(urlParameters.getBytes().length));
+			connection.setUseCaches(false);
+
+			/*
+			OutputStream wr = connection.getOutputStream();
+			wr.write(payload.toString().getBytes("UTF-8"));
+			wr.flush();
+			wr.close();
+
+			int resp = connection.getResponseCode();
+
+			System.out.println("Code = " + resp);
+
+			InputStream is = connection.getInputStream();
+
+			if (is != null) {
+				System.out.println("IS is not null");
+				String resString = "";
+				try {
+					BufferedReader br = new BufferedReader(
+							new InputStreamReader(is));
+					String str = "";
+					while ((str = br.readLine()) != null) {
+						resString += str + "\n";
+					}
+				} catch (IOException io) {
+					io.printStackTrace();
+					resString = null;
+				}
+				System.out.println("Resp = "+resString);
+			}else {
+				System.out.println("IS is null");
+			}
+			*/
+			int responseCode = connection.getResponseCode();
+			System.out.println("\nSending 'GET' request to URL : " + url);
+			System.out.println("Response Code : " + responseCode);
+	 
+			BufferedReader in = new BufferedReader(
+			        new InputStreamReader(connection.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+	 
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+	    
+			FileDialog choo = new FileDialog(myFrame, "Choose your file destination",FileDialog.SAVE);
+			choo.setDirectory(null);
+			choo.setFile("enter file name here");
+	        choo.setVisible(true);
+	        
+	        String targetFile = choo.getDirectory() + choo.getFile() + ".txt";
+	        
+	        BufferedWriter out = new BufferedWriter(new FileWriter(new File(targetFile)));
+			out.write(response.toString());
+			out.close();
+			
+			//print result
+			//System.out.println(response.toString());
+			// connection.disconnect();
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		
+
+		/*
+		 * try {
+		 * 
+		 * String request =
+		 * "http://192.168.0.20:8080/Test/test?param1=fhanb&param2=andv"; URL
+		 * url = new URL(request); HttpURLConnection connection =
+		 * (HttpURLConnection) url .openConnection();
+		 * connection.setDoOutput(true); connection.setDoInput(true);
+		 * connection.setInstanceFollowRedirects(false);
+		 * connection.setRequestMethod("Get");
+		 * connection.setRequestProperty("Content-Type",
+		 * "application/x-www-form-urlencoded");
+		 * connection.setRequestProperty("charset", "utf-8");
+		 * 
+		 * connection.setUseCaches(false);
+		 * 
+		 * OutputStream wr = connection.getOutputStream();
+		 * wr.write(payload.toString().getBytes("UTF-8")); wr.flush();
+		 * wr.close(); connection.disconnect(); } catch (Exception e) {
+		 * System.out.println(e.getMessage()); }
+		 */
+	}
 }

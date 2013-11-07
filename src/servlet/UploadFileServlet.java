@@ -23,12 +23,16 @@ import org.json.JSONObject;
 import com.cloud.gatordrive.RequestHandler;
 
 /**
- * @author sm23772
  * 
  *         TODO To change the template for this generated type comment go to
  *         Window - Preferences - Java - Code Style - Code Templates
  */
 public class UploadFileServlet extends HttpServlet {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	public void doPost(HttpServletRequest req, HttpServletResponse res) {
 		
@@ -48,6 +52,7 @@ public class UploadFileServlet extends HttpServlet {
 			int numOfParts = 0;
 			String username = null;
 			Iterator iter = items.iterator();
+			InputStream is;
 			while (iter.hasNext()) {
 
 				FileItem item = (FileItem) iter.next();
@@ -66,45 +71,92 @@ public class UploadFileServlet extends HttpServlet {
 					if(item.getFieldName().contentEquals("username")){
 						username = item.getString();
 					}
+					if(item.getFieldName().contentEquals("attachment")){
+						System.out.println("its a file");
+                        System.out.println(item.getName());
+                        File cfile = new File(item.getName());
+                        File tosave = new File("/tmp/"+cfile.getName());
+                                        //getServletContext().getRealPath("/tmp/")+cfile.getName());
+                                        //cfile.getName());
+                        
+                        is = item.getInputStream();
+                        int success = 0;
+                        
+                        if(is != null){
+                                RequestHandler reqHandler = new RequestHandler(username);
+                                if(fd != 0){
+                                        success = reqHandler.storePartition(fd, cfile.getName(), is, partitionNumber, numOfParts);
+                                }else {
+                                        reqHandler.partitionFile(is, cfile.getName());
+                                }
+                        }else{
+                                System.out.println("InputStream was null");
+                        }
+                        
+                        if(fd != 0){
+                                res.setContentType("text/plain");
+                                try {
+                                        JSONObject json = new JSONObject();
+                                        json.put("success", success);
+                                        //res.getWriter().println(json.toString());
+                                        res.getWriter().println("success="+success);
+                                } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                }
+                        }
+					}
 				} else {
+					
 					System.out.println("its a file");
-					System.out.println(item.getName());
-					File cfile = new File(item.getName());
-					File tosave = new File("/tmp/"+cfile.getName());
-							//getServletContext().getRealPath("/tmp/")+cfile.getName());
-							//cfile.getName());
+                    System.out.println(item.getName());
+                    File cfile = new File(item.getName());
+                    File tosave = new File("/tmp/"+cfile.getName());
+                                    //getServletContext().getRealPath("/tmp/")+cfile.getName());
+                                    //cfile.getName());
+                    
+                    is = item.getInputStream();
+                    int success = 0;
+                    
+                    if(is != null){
+                            RequestHandler reqHandler = new RequestHandler(username);
+                            if(fd != 0){
+                                    success = reqHandler.storePartition(fd, cfile.getName(), is, partitionNumber, numOfParts);
+                            }else {
+                                    reqHandler.partitionFile(is, cfile.getName());
+                            }
+                    }else{
+                            System.out.println("InputStream was null");
+                    }
+                    
+                    if(fd != 0){
+                            res.setContentType("text/plain");
+                            try {
+                                    JSONObject json = new JSONObject();
+                                    json.put("success", success);
+                                    //res.getWriter().println(json.toString());
+                                    res.getWriter().println("success="+success);
+                            } catch (IOException e1) {
+                                    e1.printStackTrace();
+                            }
+                    }
 					
-					InputStream is = item.getInputStream();
-					int success = 0;
-					
-					if(is != null){
-						RequestHandler reqHandler = new RequestHandler(username);
-						if(fd != 0){
-							success = reqHandler.storePartition(fd, cfile.getName(), is, partitionNumber, numOfParts);
-						}else {
-							reqHandler.partitionFile(is, cfile.getName());
-						}
-					}else{
-						System.out.println("InputStream was null");
-					}
-					
-					if(fd != 0){
-						res.setContentType("text/plain");
-						try {
-							JSONObject json = new JSONObject();
-							json.put("success", success);
-							//res.getWriter().println(json.toString());
-							res.getWriter().println("success="+success);
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					}
-					//item.write(tosave);
 				}
 			}
 
 		} catch (Exception e) {
 			System.out.println(e);
 		}
+	}
+	
+	public void doGet(HttpServletRequest req, HttpServletResponse res) {
+		
+		res.setContentType("text/plain");
+		try {
+			//res.getWriter().println(json.toString());
+			res.getWriter().println("success="+1);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
 	}
 }
