@@ -59,6 +59,31 @@ public class RequestHandler {
 		
 		return distributePartitions(filename, FD, orgPartitions, repPartitions);
 	}
+	
+	public void getFile(String filename){
+		
+		int fd = master.getFileDescriptor(filename);
+		
+		if(fd == 0){
+			System.out.println("File not found on the server");
+			return;
+		}
+		
+		//check if the fd is in this server
+		File file = new File(SERVER_TABLE);
+		boolean updated = false;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void getPartition(){
+		
+	}
 
 	public File createFile(InputStream fis, String filename) {
 
@@ -197,9 +222,11 @@ public class RequestHandler {
 		//distribute repPartitions
 		System.out.println("CCCC");
 		count = 0;
-		for(i = serverList.size() - 1; i <= 0; i--){
+		for(i = serverList.size() - 1; i >= 0; i--){
+			System.out.println("11111111");
 			int high = count + perServer;
 			for(int j = count; j < high; j++,count++){
+				System.out.println("22222222");
 				result = client.sendPartition(fd, serverList.get(i),repPartitions[j],j,num, username);
 				if(result == 1){
 					System.out.println("Storing replicated partition "+j+" on "+serverList.get(i)+" success");
@@ -208,6 +235,8 @@ public class RequestHandler {
 				}
 			}
 		}
+		System.out.println("i = "+i);
+		System.out.println("count = "+count);
 		System.out.println("DDDD");
 		for(int j = count; j < num; j++){
 			result = client.sendPartition(fd, serverList.get(i+1),repPartitions[j],j,num, username);
@@ -274,23 +303,42 @@ public class RequestHandler {
 		try {
 			//FileInputStream is = new FileInputStream();
 			BufferedReader br = new BufferedReader(new FileReader(file));
-			BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
+			//BufferedWriter bw = new BufferedWriter(new FileWriter(file,false));
 		    
+			StringBuilder sb = new StringBuilder();
+			/*
+			sb.append(br.readLine());
+			sb.append("\n");
+			sb.append(br.readLine());
+			sb.append("\n");
+			*/
 			String line;
 			String[] tokens;
 			while((line = br.readLine()) != null){
 				//if line is not null, there should be  3 tokens
 				tokens = line.split("\t");
+				System.out.println("tokenssize = "+tokens.length);
+				for(String s : tokens){
+					System.out.println("s = "+s);
+				}
 				if(tokens[0] != null && FD == Integer.parseInt(tokens[0])){
 					
 					String currPartitions = tokens[2];
+					System.out.println("tokens2 = "+tokens[2]);
 					if(filename.contains("Original")){
 						currPartitions = currPartitions + " "+ partitionNumber+",O";
 					}else{
 						currPartitions = currPartitions + " "+ partitionNumber+",R";
 					}
+					String entry = tokens[0]+"\t"+tokens[1]+"\t"+currPartitions;
+					sb.append(entry);
+					sb.append("\n");
+					//bw.write(sb.toString());
 					updated = true;
 					break;
+				}else{
+					sb.append(line);
+					sb.append("\n");
 				}
 			}
 			
@@ -303,12 +351,15 @@ public class RequestHandler {
 				}else{
 					entry = FD+"\t"+numOfPartitions+"\t"+partitionNumber+",R";
 				}
-				
-				bw.write(entry);
+				sb.append(entry);
+				sb.append("\n");
+				//bw.write(sb.toString());
 				
 			}
-	
+			System.out.println("SB = "+sb.toString());
 			br.close();
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file,false));
+			bw.write(sb.toString());
 		    bw.close();
 			
 		} catch (FileNotFoundException e) {
