@@ -36,6 +36,7 @@ public class RequestHandler {
 		merge = new Merge();
 		master = new MasterNode();
 		this.username = username;
+		ApplicationInfo.userName = username;
 	}
 
 	public int partitionFile(InputStream fis, String filename) {
@@ -66,6 +67,7 @@ public class RequestHandler {
 	public int getFile(String filename){
 		
 		int fd = master.getFileDescriptor(filename);
+		int totalNumOfParts = 0;
 		
 		if(fd == 0){
 			System.out.println("File not found on the server");
@@ -89,7 +91,7 @@ public class RequestHandler {
 					System.out.println("s = "+s);
 				}
 				if(tokens[0] != null && fd == Integer.parseInt(tokens[0])){
-				
+					totalNumOfParts = Integer.parseInt(tokens[1]);
 					result = this.getLocalPartition(fd, filename, tokens[2], Integer.parseInt(tokens[1]));
 					break;
 				}
@@ -105,7 +107,7 @@ public class RequestHandler {
 		}else {
 			try {
 				String localIP = InetAddress.getLocalHost().getHostAddress();
-				return master.getPartition(fd, filename, localIP);
+				return master.getPartition(fd, filename, localIP, totalNumOfParts);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 				return 0;

@@ -115,7 +115,7 @@ public class Client {
     }
     
     
-public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, String fileName, int replyBackIP, int noOfParts, String username) {
+public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, String fileName, String replyBackIP, int numOfParts, String username) {
     	
     	String urlString = "http://"+serverAddress+":8080/GatorDrive/getPartition";
         HttpPost postRequest = new HttpPost (urlString) ;
@@ -129,7 +129,7 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
             multiPartEntity.addPart("fileDescriptor", new StringBody(fd+""));
             //multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
             
-            multiPartEntity.addPart("replyBackIP", new StringBody(Integer.toString(replyBackIP)));
+            multiPartEntity.addPart("replyBackIP", new StringBody(replyBackIP));
             multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
             multiPartEntity.addPart("username", new StringBody(username));
             
@@ -179,7 +179,7 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
     	
     }
     
-    public int getPartition(int fd, String serverAddress, String filename, int replyBackIP, String username, int noOfParts) {
+    public int getPartition(int fd, String serverAddress, String filename, String replyBackIP, String username, int noOfParts) {
     	   
     	String response = executeMultiPartGetPartitionRequest(serverAddress, fd, filename, replyBackIP, noOfParts, username) ;
     	response = response.trim();

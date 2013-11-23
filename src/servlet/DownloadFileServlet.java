@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.net.URLDecoder;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.cloud.gatordrive.RequestHandler;
 
 public class DownloadFileServlet extends HttpServlet{
 	
@@ -53,16 +56,46 @@ public class DownloadFileServlet extends HttpServlet{
             response.sendError(HttpServletResponse.SC_NOT_FOUND); // 404.
             return;
         }
-
+        
+        
+        
         // Decode the file name (might contain spaces and on) and prepare file object.
+        /*
         File file = new File(filePath, URLDecoder.decode(requestedFile, "UTF-8"));
-
+        
         // Check if file actually exists in filesystem.
         if (!file.exists()) {
             // Do your thing if the file appears to be non-existing.
             // Throw an exception, or send 404, or show default/warning page, or just ignore it.
             response.sendError(HttpServletResponse.SC_NOT_FOUND); // 404.
             return;
+        }
+        */
+        
+        Cookie[] cookies = request.getCookies();
+        String username = "";
+        for(Cookie obj : cookies){
+        	if(obj.getName().equals("username")){
+        		username = obj.getValue();
+        	}
+        }
+        
+        if(username.contentEquals("")){
+        	//username not present in cookies
+        	//redirect to login page
+        }
+        
+        //just for testing
+        username = "gator";
+        
+        RequestHandler reqHandler = new RequestHandler(username);
+        
+        int result = reqHandler.getFile(requestedFile);
+        
+        File file = null;
+        
+        if(result == 1){
+        	file = new File("/tmp/Temp.txt");
         }
         
         // Get content type by filename.
@@ -101,6 +134,10 @@ public class DownloadFileServlet extends HttpServlet{
             // Gently close streams.
             close(output);
             close(input);
+        }
+        if(file.exists()){
+        	//always delete the /tmp/Temp.txt file once we are done with it
+        	file.delete();
         }
     }
 

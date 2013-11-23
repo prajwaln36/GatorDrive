@@ -35,7 +35,7 @@ public class Split {
 	                int j=0;  
 	                for (int i = 1; i <= noFile; i++) {  
 	                    //frgfName[i-1] ="/tmp/temp"+sourceFName + String.valueOf(i)+type+".txt";  
-	                	frgfName[i-1] ="/tmp/"+String.valueOf(i)+type+sourceFName; 
+	                	frgfName[i-1] ="/tmp/"+String.valueOf(i)+sourceFName+".part"; 
 	                	fileFragments[i-1] = new File(frgfName[i-1]);  
 	                     
 	                    FileOutputStream fos = new FileOutputStream(fileFragments[i - 1]);  
@@ -48,7 +48,7 @@ public class Split {
 	                if (lsize != 0) {                      
 	                    System.out.println(noFile);  
 	                    //frgfName[noFile] ="/tmp/temp"+sourceFName + String.valueOf(noFile+1)+type+".txt";  
-	                    frgfName[noFile] ="/tmp/"+String.valueOf(noFile+1)+type+sourceFName;
+	                    frgfName[noFile] ="/tmp/"+String.valueOf(noFile+1)+sourceFName+".part";
 	                    fileFragments[noFile] = new File(frgfName[noFile]);  
 	                    FileOutputStream fos = new FileOutputStream(fileFragments[noFile]);  
 	                    byte[] data = new byte[lsize];  

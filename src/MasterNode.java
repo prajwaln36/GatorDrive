@@ -14,6 +14,8 @@ import java.util.List;
 
 import javax.swing.RepaintManager;
 
+import com.cloud.gatordrive.client.Client;
+
 public class MasterNode {
 
 	//A file to maintain mapping from filename to FD created using this node
@@ -87,7 +89,7 @@ public class MasterNode {
 	}
 	
 	
-	public int getPartition(int fd, String filename, String ip){
+	public int getPartition(int fd, String filename, String ip, int totalNumOfParts){
 		
 		//get master table data and send requests
 		File file = new File(MASTER_TABLE);
@@ -102,7 +104,10 @@ public class MasterNode {
 				if(fd == Integer.parseInt(tokens[0])){
 					String[] orgServers;
 					orgServers = tokens[1].split(",");
-					
+					for(String serverAddress : orgServers){
+						Client client = new Client();
+						client.getPartition(fd, serverAddress, filename, ip, ApplicationInfo.userName, totalNumOfParts);
+					}
 				}
 			}
 			
