@@ -13,6 +13,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
@@ -82,7 +83,7 @@ public class Client {
      * @param fileDescription some description for the file, just to show how to add the usual form parameters
      * @return server response as <code>String</code>
      */
-    public String executeMultiPartRequest(String serverAddress, int fd, File file, String fileName, int partitionNum, int numOfParts, String username) {
+    public String executeMultiPartRequest(String serverAddress, int fd, File file, String fileName, int partitionNum, int numOfParts, String username, String operation) {
     	
     	String urlString = "http://"+serverAddress+":8080/GatorDrive/upload";
         HttpPost postRequest = new HttpPost (urlString) ;
@@ -96,11 +97,46 @@ public class Client {
             multiPartEntity.addPart("fileDescriptor", new StringBody(fd+""));
             multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
             multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
-            multiPartEntity.addPart("username", new StringBody(username+""));
+            multiPartEntity.addPart("username", new StringBody(username));
+            if(operation.contentEquals("read")){
+            	multiPartEntity.addPart("operation", new StringBody(operation));
+            }
             /*Need to construct a FileBody with the file that needs to be attached and specify the mime type of the file. Add the fileBody to the request as an another part.
             This part will be considered as file part and the rest of them as usual form-data parts*/
-            FileBody fileBody = new FileBody(file, "application/octect-stream") ;
+            FileBody fileBody = new FileBody(file, ContentType.APPLICATION_OCTET_STREAM) ;
             multiPartEntity.addPart("attachment", fileBody) ;
+ 
+            postRequest.setEntity(multiPartEntity) ;
+        }catch (UnsupportedEncodingException ex){
+            ex.printStackTrace() ;
+        }
+ 
+        return executeRequest (postRequest) ;
+    }
+    
+    
+public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, String fileName, int replyBackIP, int noOfParts, String username) {
+    	
+    	String urlString = "http://"+serverAddress+":8080/GatorDrive/getPartition";
+        HttpPost postRequest = new HttpPost (urlString) ;
+        try{
+ 
+            MultipartEntity multiPartEntity = new MultipartEntity () ;
+ 
+            //The usual form parameters can be added this way
+            //multiPartEntity.addPart("fileDescription", new StringBody(fileDescription != null ? fileDescription : "")) ;
+            multiPartEntity.addPart("fileName", new StringBody(fileName)) ;
+            multiPartEntity.addPart("fileDescriptor", new StringBody(fd+""));
+            //multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
+            
+            multiPartEntity.addPart("replyBackIP", new StringBody(Integer.toString(replyBackIP)));
+            multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
+            multiPartEntity.addPart("username", new StringBody(username));
+            
+            /*Need to construct a FileBody with the file that needs to be attached and specify the mime type of the file. Add the fileBody to the request as an another part.
+            This part will be considered as file part and the rest of them as usual form-data parts*/
+            //FileBody fileBody = new FileBody(file, ContentType.APPLICATION_OCTET_STREAM) ;
+            //multiPartEntity.addPart("attachment", fileBody) ;
  
             postRequest.setEntity(multiPartEntity) ;
         }catch (UnsupportedEncodingException ex){
@@ -116,11 +152,37 @@ public class Client {
     	System.out.println("filename = "+filePartition.getAbsolutePath());
     	System.out.println("filename = "+filePartition.getName());
     	System.out.println("username ="+username);
-    	//File fl = new File("tempa.txt-0original1Original.txt");
+    	//File fl = new File("/tmp/originala.txt");
+    	//if(fl.exists()){
+    	//	System.out.println("File orginala exist");
+    	//}
     	//String response = executeMultiPartRequest(serverAddress, fd, fl, 
     	//		fl.getName(), partitionNumber, numOfParts, username) ;
     	String response = executeMultiPartRequest(serverAddress, fd, filePartition, 
-    			filePartition.getName(), partitionNumber, numOfParts, username) ;
+    			filePartition.getName(), partitionNumber, numOfParts, username,"write") ;
+    	response = response.trim();
+    	System.out.println("resp = "+response);
+    	String[] tokens = response.split("=");
+    	return Integer.parseInt(tokens[1]);
+    	
+    }
+    
+    
+    public int sendPartitionRead(int fd, String serverAddress, File filePartition, int partitionNumber, int numOfParts, String username, String operation) {
+   
+    	String response = executeMultiPartRequest(serverAddress, fd, filePartition, 
+    			filePartition.getName(), partitionNumber, numOfParts, username, operation) ;
+    	response = response.trim();
+    	System.out.println("resp = "+response);
+    	String[] tokens = response.split("=");
+    	return Integer.parseInt(tokens[1]);
+    	
+    }
+    
+    public int getPartition(int fd, String serverAddress, String filename, int replyBackIP, String username, int noOfParts) {
+    	   
+    	String response = executeMultiPartGetPartitionRequest(serverAddress, fd, filename, replyBackIP, noOfParts, username) ;
+    	response = response.trim();
     	System.out.println("resp = "+response);
     	String[] tokens = response.split("=");
     	return Integer.parseInt(tokens[1]);

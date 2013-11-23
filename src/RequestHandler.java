@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.omg.PortableServer.Servant;
@@ -60,30 +63,180 @@ public class RequestHandler {
 		return distributePartitions(filename, FD, orgPartitions, repPartitions);
 	}
 	
-	public void getFile(String filename){
+	public int getFile(String filename){
 		
 		int fd = master.getFileDescriptor(filename);
 		
 		if(fd == 0){
 			System.out.println("File not found on the server");
-			return;
+			return 0;
 		}
 		
 		//check if the fd is in this server
 		File file = new File(SERVER_TABLE);
-		boolean updated = false;
+		//boolean updated = false;
+		int result = 0;
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
-			
+
+			String line;
+			String[] tokens;
+			while((line = br.readLine()) != null){
+				//if line is not null, there should be  3 tokens
+				tokens = line.split("\t");
+				System.out.println("tokenssize = "+tokens.length);
+				for(String s : tokens){
+					System.out.println("s = "+s);
+				}
+				if(tokens[0] != null && fd == Integer.parseInt(tokens[0])){
+				
+					result = this.getLocalPartition(fd, filename, tokens[2], Integer.parseInt(tokens[1]));
+					break;
+				}
+			}
+			br.close();
 			
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		if(result == 1){
+			return 1;
+		}else {
+			try {
+				String localIP = InetAddress.getLocalHost().getHostAddress();
+				return master.getPartition(fd, filename, localIP);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+				return 0;
+			}		
+		}
 	}
 	
-	public void getPartition(){
-		
+	public int getLocalPartition(int fd, String filename, String partitions, int totalNumOfParts){
+
+		String[] tokens1 = partitions.split(" ");
+		// partitions will be of the format 1,O 2,O 0,R
+		int numOfParts = tokens1.length;
+		// File[] fileParts = new File[numOfParts];
+		int result = 0;
+		for (String s : tokens1) {
+			String[] tokens2 = s.split(",");
+			if (tokens2[1].contentEquals("O")) {
+				// retrive the partition
+				int partitionNum = Integer.parseInt(tokens2[1]);
+				String path = "/tmp/" + username + "/" + partitionNum
+						+ "original" + filename;
+				File cfile = new File(path);
+
+				InputStream is = null;
+				try {
+					is = new FileInputStream(cfile);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				result = this.addPartition(fd, cfile.getName(), is, partitionNum,
+						totalNumOfParts);
+				//count++;
+			} else {
+
+			}
+		}
+
+		return result;
+
 	}
+	
+	public int getPartition(int fd, String filename, String ip, int totalNumOfParts){
+
+		File file = new File(SERVER_TABLE);
+		// boolean updated = false;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+
+			String line;
+			String[] tokens;
+			while ((line = br.readLine()) != null) {
+				// if line is not null, there should be 3 tokens
+				tokens = line.split("\t");
+				System.out.println("tokenssize = " + tokens.length);
+				for (String s : tokens) {
+					System.out.println("s = " + s);
+				}
+				if (tokens[0] != null && fd == Integer.parseInt(tokens[0])) {
+
+					String[] tokens1 = tokens[2].split(" ");
+					// partitions will be of the format 1,O 2,O 0,R
+					int numOfParts = tokens1.length;
+					// File[] fileParts = new File[numOfParts];
+					int count = 0;
+					int result;
+					for (String s : tokens1) {
+						String[] tokens2 = s.split(",");
+						if (tokens2[1].contentEquals("O")) {
+							// retrive the partition
+							int partitionNum = Integer.parseInt(tokens2[1]);
+							String path = "/tmp/" + username + "/"
+									+ partitionNum + "original" + filename;
+							// fileParts[count] = new File(path);
+							File cfile = new File(path);
+
+							// InputStream is = new FileInputStream(cfile);
+							// this.addPartition(fd, cfile.getName(), is,
+							// partitionNum, totalNumOfParts);
+							Client client = new Client();
+							result = client.sendPartitionRead(fd, ip, cfile,
+									partitionNum, totalNumOfParts, username,
+									"readOp");
+							if (result == 1) {
+								System.out
+										.println("Successfully sent the partition "
+												+ partitionNum + " to " + ip);
+							} else {
+								System.out
+										.println("Failed to send the partition "
+												+ partitionNum + " to " + ip);
+							}
+
+							count++;
+						} else {
+
+						}
+					}
+				}
+			}
+			
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return 0;
+		/*
+		 * if(count == totalNumOfParts){ return 1; }else{ return
+		 * master.getFile(filename); }
+		 */
+	}
+	
+	//return values
+	//1 - to indicate addPartition call was successful for (local/remote) server
+	//0 - to indicate all the partitions are found in the same local server
+	public int addPartition(int FD, String filePartition, InputStream is, int partitionNumber, int numOfParts) {
+		
+		ApplicationInfo.map.put(partitionNumber, is);
+		
+		if(ApplicationInfo.map.size() == numOfParts){
+			//map has all required inputstream
+			InputStream[] files = new InputStream[numOfParts];
+			for(int i = 0; i < ApplicationInfo.map.size(); i++){
+				 files[i] = ApplicationInfo.map.get(Integer.valueOf(i));
+			}
+			merge.mergeFiles(files);
+			
+			return 0;
+		}
+		return 1;
+	}
+	
 
 	public File createFile(InputStream fis, String filename) {
 
@@ -179,6 +332,9 @@ public class RequestHandler {
 		
 		List<String> serverList = master.getDistribution(filename, fd);
 		
+		List<String> orgServerList = new ArrayList<String>();
+		List<String> repServerList = new ArrayList<String>();
+		
 		System.out.println("FD = "+fd);
 		for(String s : serverList){
 			System.out.println("Server = "+s);
@@ -204,6 +360,8 @@ public class RequestHandler {
 				result = client.sendPartition(fd, serverList.get(i),orgPartitions[j],j,num, username);
 				if(result == 1){
 					System.out.println("Storing Original partition "+j+" on "+serverList.get(i)+" success");
+					//update master table
+					orgServerList.add(serverList.get(i));
 				}else{
 					System.out.println("Storing Original partition "+j+" on "+serverList.get(i)+" failed");
 				}
@@ -214,6 +372,7 @@ public class RequestHandler {
 			result = client.sendPartition(fd, serverList.get(i-1),orgPartitions[j],j,num, username);
 			if(result == 1){
 				System.out.println("Storing Original partition "+j+" on "+serverList.get(i-1)+" success");
+				orgServerList.add(serverList.get(i-1));
 			}else{
 				System.out.println("Storing Original partition "+j+" on "+serverList.get(i-1)+" failed");
 			}
@@ -230,6 +389,8 @@ public class RequestHandler {
 				result = client.sendPartition(fd, serverList.get(i),repPartitions[j],j,num, username);
 				if(result == 1){
 					System.out.println("Storing replicated partition "+j+" on "+serverList.get(i)+" success");
+					//update master table
+					repServerList.add(serverList.get(i));
 				}else{
 					System.out.println("Storing replicated partition "+j+" on "+serverList.get(i)+" failed");
 				}
@@ -242,11 +403,13 @@ public class RequestHandler {
 			result = client.sendPartition(fd, serverList.get(i+1),repPartitions[j],j,num, username);
 			if(result == 1){
 				System.out.println("Storing replicated partition "+j+" on "+serverList.get(i+1)+" success");
+				repServerList.add(serverList.get(i+1));
 			}else{
 				System.out.println("Storing replicated partition "+j+" on "+serverList.get(i+1)+" failed");
 			}
 		}
 		
+		master.addEntry(fd, orgServerList, repServerList);
 		return 1;
 	}
 
