@@ -17,10 +17,10 @@ import javax.swing.RepaintManager;
 public class MasterNode {
 
 	//A file to maintain mapping from filename to FD created using this node
-	private final static String FILE_NAME = "MapperFile.txt";
-	private final static String SEQ_FILE_NAME = "SequenceNumber.txt";
-	private final static String MASTER_TABLE = "MasterTable.txt";
-	private final static String SERVERS_FILE = "Server.txt";
+	private final static String FILE_NAME = "/tmp/MapperFile.txt";
+	private final static String SEQ_FILE_NAME = "/tmp/SequenceNumber.txt";
+	private final static String MASTER_TABLE = "/tmp/MasterTable.txt";
+	private final static String SERVERS_FILE = "/tmp/Server.txt";
 	
 	//Master node assigns unique fileDesc to each of the files in the system
 	
@@ -28,11 +28,7 @@ public class MasterNode {
 		//open the file and get the latest FD
 		//File looks like this
 		/*
-		 * 
-		 * text1.txt 1
-		 * text2.txt 2
-		 * text3.txt 3
-		 * 
+		 * 5 
 		 */
 		
 		File file = new File(SEQ_FILE_NAME);
@@ -53,6 +49,68 @@ public class MasterNode {
 		}
 		
 		return latest;
+		
+	}
+	
+	public int getFileDescriptor(String filename) {
+		// open the file and get the fd for filename
+		// File looks like this
+		/*
+		 * text1.txt 1 
+		 * text2.txt 2 
+		 * text3.txt 3
+		 */
+
+		File file = new File(FILE_NAME);
+		// String latest;
+		int fd = 0;
+		try {
+			// FileInputStream is = new FileInputStream();
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			String line; // = br.readLine();
+			String[] tokens;
+			while((line = br.readLine()) != null){
+				tokens = line.split(" ");
+				if(tokens[0].contentEquals(filename)){
+					fd = Integer.parseInt(tokens[1]);
+					break;
+				}
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return fd;
+	}
+	
+	
+	public int getPartition(int fd, String filename, String ip){
+		
+		//get master table data and send requests
+		File file = new File(MASTER_TABLE);
+		
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			
+			String line;
+			String[] tokens;
+			while((line = br.readLine()) != null){
+				tokens = line.split("\t");
+				if(fd == Integer.parseInt(tokens[0])){
+					String[] orgServers;
+					orgServers = tokens[1].split(",");
+					
+				}
+			}
+			
+		}catch(IOException e){
+			
+		}
+		
+		return 0;
 		
 	}
 	
