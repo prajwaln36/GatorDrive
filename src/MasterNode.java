@@ -22,7 +22,7 @@ public class MasterNode {
 	private final static String FILE_NAME = "/tmp/MapperFile.txt";
 	private final static String SEQ_FILE_NAME = "/tmp/SequenceNumber.txt";
 	private final static String MASTER_TABLE = "/tmp/MasterTable.txt";
-	private final static String SERVERS_FILE = "/tmp/Server.txt";
+	private final static String SERVERS_FILE = "/tmp/Servers.txt";
 	
 	//Master node assigns unique fileDesc to each of the files in the system
 	
@@ -78,13 +78,13 @@ public class MasterNode {
 					break;
 				}
 			}
-
+			br.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		return fd;
 	}
 	
@@ -105,9 +105,13 @@ public class MasterNode {
 					String[] orgServers;
 					orgServers = tokens[1].split(",");
 					for(String serverAddress : orgServers){
-						Client client = new Client();
-						client.getPartition(fd, serverAddress, filename, ip, ApplicationInfo.userName, totalNumOfParts);
+						System.out.println("IP = "+serverAddress);
+						if(!serverAddress.contentEquals(ApplicationInfo.IP_ADDRESS)){
+							Client client = new Client();
+							client.getPartition(fd, serverAddress, filename, ip, ApplicationInfo.userName, totalNumOfParts);
+						}
 					}
+					break;
 				}
 			}
 			
@@ -115,11 +119,55 @@ public class MasterNode {
 			
 		}
 		
-		return 0;
+		return 1;
 		
 	}
 	
-	public void writeSuccessfull(String filename,int FD) {
+	public int deletePartition(int fd, String filename, int totalNumOfParts, int count){
+		
+		//get master table data and send requests
+		File file = new File(MASTER_TABLE);
+		
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			
+			String line;
+			String[] tokens;
+			while((line = br.readLine()) != null){
+				tokens = line.split("\t");
+				if(fd == Integer.parseInt(tokens[0])){
+					String[] orgServers;
+					orgServers = tokens[1].split(",");
+					for(String serverAddress : orgServers){
+						System.out.println("IP = "+serverAddress);
+						if(!serverAddress.contentEquals(ApplicationInfo.IP_ADDRESS)){
+							Client client = new Client();
+							int result = client.deletePartition(fd, serverAddress, filename, ApplicationInfo.userName, totalNumOfParts);
+							if(result != 0){
+								count += result;
+							}
+						}
+					}
+					break;
+				}
+			}
+			
+		}catch(IOException e){
+			
+		}
+		
+		//remove entry from server table
+		this.deleteEntry(fd);
+		
+		if(count == (2 * totalNumOfParts)){
+			return 1;
+		}else{
+			return 0;
+		}
+		
+	}
+	
+	public void writeSuccessfull(String filename, int FD) {
 		
 		File sfile = new File(SEQ_FILE_NAME);
 		File file = new File(FILE_NAME);
@@ -131,7 +179,8 @@ public class MasterNode {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
 		    String line = filename + " " + FD;
 		    bw.write(line);
-		    sbw.write(FD);
+		    String seq = FD + "\n";
+		    sbw.write(seq);
 		    bw.close();
 		    sbw.close();
 			
@@ -159,8 +208,8 @@ public class MasterNode {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 		    
 			//skip first 2 lines
-			br.readLine();
-			br.readLine();
+			//br.readLine();
+			//br.readLine();
 			String line;
 			StringBuilder sb = new StringBuilder();
 			String[] tokens;
@@ -199,7 +248,7 @@ public class MasterNode {
 		
 	}
 	
-	public void addEntry(int FD, List<String> OrgServers, List<String> replicatedServers){
+	public void addEntry(int FD, String filename, List<String> OrgServers, List<String> replicatedServers){
 		
 		//Table looks like this
 				/*				Master Table
@@ -216,6 +265,7 @@ public class MasterNode {
 				    
 					StringBuilder sb = new StringBuilder();
 					
+					//sb.append("\n");
 					sb.append(FD);
 					sb.append("\t");
 					
@@ -230,7 +280,9 @@ public class MasterNode {
 						sb.append(",");
 					}
 					
-					bw.write(sb.toString());
+					String data = sb.toString();
+					data = data.substring(0, data.length() -1);
+					bw.write(data);
 					
 				    bw.close();
 					
@@ -239,6 +291,8 @@ public class MasterNode {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				
+				this.writeSuccessfull(filename, FD);
 				
 	}
 	
@@ -257,8 +311,8 @@ public class MasterNode {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 		    
 			//skip first 2 lines
-			br.readLine();
-			br.readLine();
+			//br.readLine();
+			//br.readLine();
 			String line;
 			StringBuilder sb = new StringBuilder();
 			String[] tokens;
@@ -273,7 +327,11 @@ public class MasterNode {
 				}
 			}
 		    br.close();
-			
+		    
+		    BufferedWriter bw = new BufferedWriter(new FileWriter(file,false));
+			bw.write(sb.toString());
+		    bw.close();
+		    
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

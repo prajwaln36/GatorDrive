@@ -1,11 +1,6 @@
 package com.cloud.gatordrive.servlet;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,7 +15,7 @@ import org.json.JSONObject;
 
 import com.cloud.gatordrive.RequestHandler;
 
-public class GetPartitionServlet extends HttpServlet {
+public class DeletePartitionServlet  extends HttpServlet {
 
 	/**
 	 * 
@@ -67,14 +62,11 @@ public class GetPartitionServlet extends HttpServlet {
 					if(item.getFieldName().contentEquals("username")){
 						username = item.getString();
 					}
-					if(item.getFieldName().contentEquals("replyBackIP")){
-						replybackIP = item.getString();
-					}
 				}
 			}
 			
 			RequestHandler reqHandler = new RequestHandler(username);
-			int success = reqHandler.getPartition(fd, filename, replybackIP, numOfParts);
+			int success = reqHandler.deletePartition(fd, filename, numOfParts);
 			
 			res.setContentType("text/plain");
             try {
@@ -91,3 +83,4 @@ public class GetPartitionServlet extends HttpServlet {
 		}
 	}
 }
+

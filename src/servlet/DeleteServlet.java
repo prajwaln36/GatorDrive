@@ -1,11 +1,6 @@
 package com.cloud.gatordrive.servlet;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,17 +15,17 @@ import org.json.JSONObject;
 
 import com.cloud.gatordrive.RequestHandler;
 
-public class GetPartitionServlet extends HttpServlet {
+public class DeleteServlet  extends HttpServlet {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public void doPost(HttpServletRequest req, HttpServletResponse res) {
+	public void doGet(HttpServletRequest req, HttpServletResponse res) {
 		
 		try {
-			
+			/*
 			FileUpload fup = new FileUpload();
 			boolean isMultipart = FileUpload.isMultipartContent(req);
 
@@ -39,16 +34,18 @@ public class GetPartitionServlet extends HttpServlet {
 			DiskFileUpload upload = new DiskFileUpload();
 
 			// Parse the request
-			List /* FileItem */items = upload.parseRequest(req);
+			List /* FileItem *//*items = upload.parseRequest(req);
+			*/
 			int fd = 0;
 			String replybackIP = "";
 			//int partitionNumber = 0;
 			int numOfParts = 0;
 			String filename = "";
 			String username = null;
-			Iterator iter = items.iterator();
+			//Iterator iter = items.iterator();
 			//InputStream is;
 			//String operation = "";
+			/*
 			while (iter.hasNext()) {
 
 				FileItem item = (FileItem) iter.next();
@@ -72,9 +69,15 @@ public class GetPartitionServlet extends HttpServlet {
 					}
 				}
 			}
+			*/
+			
+			filename = req.getParameter("filename");
+			
+			username = "gators";
 			
 			RequestHandler reqHandler = new RequestHandler(username);
-			int success = reqHandler.getPartition(fd, filename, replybackIP, numOfParts);
+			
+			int success = reqHandler.deleteFile(filename);
 			
 			res.setContentType("text/plain");
             try {
@@ -91,3 +94,4 @@ public class GetPartitionServlet extends HttpServlet {
 		}
 	}
 }
+

@@ -104,6 +104,7 @@ public class UploadFileServlet extends HttpServlet {
                         if(is != null){
                                 RequestHandler reqHandler = new RequestHandler(username);
                                 if(fd != 0){
+                                	System.out.println("Operation = "+operation);
                                 	if(operation.contentEquals("read")){
                                 		success = reqHandler.addPartition(fd, cfile.getName(), is, partitionNumber, numOfParts);
                                 	}else{

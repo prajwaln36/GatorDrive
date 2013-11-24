@@ -98,9 +98,9 @@ public class Client {
             multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
             multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
             multiPartEntity.addPart("username", new StringBody(username));
-            if(operation.contentEquals("read")){
+            //if(operation.contentEquals("read")){
             	multiPartEntity.addPart("operation", new StringBody(operation));
-            }
+            //}
             /*Need to construct a FileBody with the file that needs to be attached and specify the mime type of the file. Add the fileBody to the request as an another part.
             This part will be considered as file part and the rest of them as usual form-data parts*/
             FileBody fileBody = new FileBody(file, ContentType.APPLICATION_OCTET_STREAM) ;
@@ -115,7 +115,7 @@ public class Client {
     }
     
     
-public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, String fileName, String replyBackIP, int numOfParts, String username) {
+    public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, String fileName, String replyBackIP, int numOfParts, String username) {
     	
     	String urlString = "http://"+serverAddress+":8080/GatorDrive/getPartition";
         HttpPost postRequest = new HttpPost (urlString) ;
@@ -130,6 +130,36 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
             //multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
             
             multiPartEntity.addPart("replyBackIP", new StringBody(replyBackIP));
+            multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
+            multiPartEntity.addPart("username", new StringBody(username));
+            
+            /*Need to construct a FileBody with the file that needs to be attached and specify the mime type of the file. Add the fileBody to the request as an another part.
+            This part will be considered as file part and the rest of them as usual form-data parts*/
+            //FileBody fileBody = new FileBody(file, ContentType.APPLICATION_OCTET_STREAM) ;
+            //multiPartEntity.addPart("attachment", fileBody) ;
+ 
+            postRequest.setEntity(multiPartEntity) ;
+        }catch (UnsupportedEncodingException ex){
+            ex.printStackTrace() ;
+        }
+ 
+        return executeRequest (postRequest) ;
+    }
+    
+    public String executeMultiPartDeletePartitionRequest(String serverAddress, int fd, String fileName, int numOfParts, String username) {
+    	
+    	String urlString = "http://"+serverAddress+":8080/GatorDrive/getPartition";
+        HttpPost postRequest = new HttpPost (urlString) ;
+        try{
+ 
+            MultipartEntity multiPartEntity = new MultipartEntity () ;
+ 
+            //The usual form parameters can be added this way
+            //multiPartEntity.addPart("fileDescription", new StringBody(fileDescription != null ? fileDescription : "")) ;
+            multiPartEntity.addPart("fileName", new StringBody(fileName)) ;
+            multiPartEntity.addPart("fileDescriptor", new StringBody(fd+""));
+            //multiPartEntity.addPart("partitionNum", new StringBody(partitionNum+""));
+            
             multiPartEntity.addPart("numOfParts", new StringBody(numOfParts+""));
             multiPartEntity.addPart("username", new StringBody(username));
             
@@ -163,11 +193,13 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
     	response = response.trim();
     	System.out.println("resp = "+response);
     	String[] tokens = response.split("=");
-    	return Integer.parseInt(tokens[1]);
-    	
+    	if(tokens.length == 2)
+    		return Integer.parseInt(tokens[1]);
+    	else
+    		return 0;
     }
     
-    
+   
     public int sendPartitionRead(int fd, String serverAddress, File filePartition, int partitionNumber, int numOfParts, String username, String operation) {
    
     	String response = executeMultiPartRequest(serverAddress, fd, filePartition, 
@@ -175,7 +207,10 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
     	response = response.trim();
     	System.out.println("resp = "+response);
     	String[] tokens = response.split("=");
-    	return Integer.parseInt(tokens[1]);
+    	if(tokens.length == 2)
+    		return Integer.parseInt(tokens[1]);
+    	else
+    		return 0;
     	
     }
     
@@ -185,7 +220,23 @@ public String executeMultiPartGetPartitionRequest(String serverAddress, int fd, 
     	response = response.trim();
     	System.out.println("resp = "+response);
     	String[] tokens = response.split("=");
-    	return Integer.parseInt(tokens[1]);
+    	if(tokens.length == 2)
+    		return Integer.parseInt(tokens[1]);
+    	else
+    		return 0;
+    	
+    }
+    
+    public int deletePartition(int fd, String serverAddress, String filename, String username, int noOfParts) {
+ 	   
+    	String response = executeMultiPartDeletePartitionRequest(serverAddress, fd, filename, noOfParts, username) ;
+    	response = response.trim();
+    	System.out.println("resp = "+response);
+    	String[] tokens = response.split("=");
+    	if(tokens.length == 2)
+    		return Integer.parseInt(tokens[1]);
+    	else
+    		return 0;
     	
     }
     

@@ -30,6 +30,8 @@ public class RequestHandler {
 	private MasterNode master;
 	private String username;
 	
+	private static int COUNT = 0;
+	
 	public RequestHandler(String username) {
 
 		split = new Split();
@@ -51,6 +53,11 @@ public class RequestHandler {
 			fis.reset();
 		} catch (IOException e) {
 			e.printStackTrace();
+			try {
+				fis = new FileInputStream(orgFile);
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			}
 		}
 		File repFile = replicateFile(fis, filename);
 		System.out.println("Replicated file created");
@@ -70,7 +77,7 @@ public class RequestHandler {
 		int totalNumOfParts = 0;
 		
 		if(fd == 0){
-			System.out.println("File not found on the server");
+			System.out.println("File "+filename+" not found on the server");
 			return 0;
 		}
 		
@@ -102,12 +109,13 @@ public class RequestHandler {
 			e.printStackTrace();
 		}
 		
-		if(result == 1){
+		if(result == 2){
 			return 1;
 		}else {
+		
 			try {
 				String localIP = InetAddress.getLocalHost().getHostAddress();
-				return master.getPartition(fd, filename, localIP, totalNumOfParts);
+				return master.getPartition(fd, filename, ApplicationInfo.IP_ADDRESS, totalNumOfParts);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 				return 0;
@@ -126,7 +134,9 @@ public class RequestHandler {
 			String[] tokens2 = s.split(",");
 			if (tokens2[1].contentEquals("O")) {
 				// retrive the partition
-				int partitionNum = Integer.parseInt(tokens2[1]);
+				int partitionNum = Integer.parseInt(tokens2[0]);
+				filename = filename.substring(0, filename.lastIndexOf("."));
+				filename += ".part";
 				String path = "/tmp/" + username + "/" + partitionNum
 						+ "original" + filename;
 				File cfile = new File(path);
@@ -177,7 +187,9 @@ public class RequestHandler {
 						String[] tokens2 = s.split(",");
 						if (tokens2[1].contentEquals("O")) {
 							// retrive the partition
-							int partitionNum = Integer.parseInt(tokens2[1]);
+							int partitionNum = Integer.parseInt(tokens2[0]);
+							filename = filename.substring(0, filename.lastIndexOf("."));
+							filename += ".part";
 							String path = "/tmp/" + username + "/"
 									+ partitionNum + "original" + filename;
 							// fileParts[count] = new File(path);
@@ -189,7 +201,7 @@ public class RequestHandler {
 							Client client = new Client();
 							result = client.sendPartitionRead(fd, ip, cfile,
 									partitionNum, totalNumOfParts, username,
-									"readOp");
+									"read");
 							if (result == 1) {
 								System.out
 										.println("Successfully sent the partition "
@@ -219,6 +231,7 @@ public class RequestHandler {
 		 */
 	}
 	
+	
 	//return values
 	//1 - to indicate addPartition call was successful for (local/remote) server
 	//0 - to indicate all the partitions are found in the same local server
@@ -226,18 +239,205 @@ public class RequestHandler {
 		
 		ApplicationInfo.map.put(partitionNumber, is);
 		
+		System.out.println("FilePart = "+ filePartition);
+		
 		if(ApplicationInfo.map.size() == numOfParts){
+			System.out.println("All files parts read");
 			//map has all required inputstream
 			InputStream[] files = new InputStream[numOfParts];
 			for(int i = 0; i < ApplicationInfo.map.size(); i++){
-				 files[i] = ApplicationInfo.map.get(Integer.valueOf(i));
+				 files[i] = ApplicationInfo.map.get(Integer.valueOf(i+1));
 			}
 			merge.mergeFiles(files);
 			
-			return 0;
+			return 1;
 		}
 		return 1;
 	}
+	
+	
+	public int deleteFile(String filename){
+		
+		int fd = master.getFileDescriptor(filename);
+		int totalNumOfParts = 0;
+		
+		if(fd == 0){
+			System.out.println("File "+filename+" not found on the server");
+			return 0;
+		}
+		
+		//check if the fd is in this server
+		File file = new File(SERVER_TABLE);
+		//boolean updated = false;
+		int result = 0;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+
+			String line;
+			String[] tokens;
+			while((line = br.readLine()) != null){
+				//if line is not null, there should be  3 tokens
+				tokens = line.split("\t");
+				System.out.println("tokenssize = "+tokens.length);
+				for(String s : tokens){
+					System.out.println("s = "+s);
+				}
+				if(tokens[0] != null && fd == Integer.parseInt(tokens[0])){
+					totalNumOfParts = Integer.parseInt(tokens[1]);
+					result = this.deleteLocalPartition(fd, filename, tokens[2], Integer.parseInt(tokens[1]));
+					break;
+				}
+			}
+			br.close();
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if(result == -1){
+			return 1;
+		}else {
+		
+			try {
+				String localIP = InetAddress.getLocalHost().getHostAddress();
+				return master.deletePartition(fd, filename, totalNumOfParts, COUNT);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+				return 0;
+			}		
+		}
+	}
+	
+	
+	public int deleteLocalPartition(int fd, String filename, String partitions, int totalNumOfParts){
+
+		String[] tokens1 = partitions.split(" ");
+		// partitions will be of the format 1,O 2,O 0,R
+		int numOfParts = tokens1.length;
+		// File[] fileParts = new File[numOfParts];
+		int result = 0;
+		for (String s : tokens1) {
+			String[] tokens2 = s.split(",");
+			if (tokens2[1].contentEquals("O")) {
+				// retrive the partition
+				int partitionNum = Integer.parseInt(tokens2[0]);
+				filename = filename.substring(0, filename.lastIndexOf("."));
+				filename += ".part";
+				String path = "/tmp/" + username + "/" + partitionNum
+						+ "original" + filename;
+				File cfile = new File(path);
+
+				result = this.removePartition(fd, cfile.getName(), cfile,
+						totalNumOfParts);
+				//count++;
+			} else {
+				int partitionNum = Integer.parseInt(tokens2[0]);
+				filename = filename.substring(0, filename.lastIndexOf("."));
+				filename += ".part";
+				String path = "/tmp/" + username + "/" + partitionNum
+						+ "replicated" + filename;
+				File cfile = new File(path);
+
+				result = this.removePartition(fd, cfile.getName(), cfile,
+						totalNumOfParts);
+			}
+		}
+		
+		//remove entry from server table
+		this.deleteEntry(fd);
+		
+		return result;
+
+	}
+	
+	
+	public int deletePartition(int fd, String filename, int totalNumOfParts){
+
+		File file = new File(SERVER_TABLE);
+		int result = 0;
+		// boolean updated = false;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+
+			String line;
+			String[] tokens;
+			while ((line = br.readLine()) != null) {
+				// if line is not null, there should be 3 tokens
+				tokens = line.split("\t");
+				System.out.println("tokenssize = " + tokens.length);
+				for (String s : tokens) {
+					System.out.println("s = " + s);
+				}
+				if (tokens[0] != null && fd == Integer.parseInt(tokens[0])) {
+
+					String[] tokens1 = tokens[2].split(" ");
+					// partitions will be of the format 1,O 2,O 0,R
+					int numOfParts = tokens1.length;
+					// File[] fileParts = new File[numOfParts];
+					int count = 0;
+					for (String s : tokens1) {
+						String[] tokens2 = s.split(",");
+						if (tokens2[1].contentEquals("O")) {
+							// retrive the partition
+							int partitionNum = Integer.parseInt(tokens2[0]);
+							filename = filename.substring(0, filename.lastIndexOf("."));
+							filename += ".part";
+							String path = "/tmp/" + username + "/"
+									+ partitionNum + "original" + filename;
+							// fileParts[count] = new File(path);
+							File cfile = new File(path);
+							
+							result = this.removePartition(fd, cfile.getName(), cfile, numOfParts);
+
+						} else {
+							// retrive the partition
+							int partitionNum = Integer.parseInt(tokens2[0]);
+							filename = filename.substring(0, filename.lastIndexOf("."));
+							filename += ".part";
+							String path = "/tmp/" + username + "/"
+									+ partitionNum + "replicated" + filename;
+							// fileParts[count] = new File(path);
+							File cfile = new File(path);
+							
+							result = this.removePartition(fd, cfile.getName(), cfile, numOfParts);
+						}
+					}
+				}
+			}
+			
+			br.close();
+			//remove entry from server table
+			this.deleteEntry(fd);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	
+	//return values
+	//1 - to indicate addPartition call was successful for (local/remote) server
+	//0 - to indicate all the partitions are found in the same local server
+	public int removePartition(int FD, String filePartition, File file,
+			int numOfParts) {
+
+		// ApplicationInfo.map.put(partitionNumber, is);
+
+		System.out.println("FilePart = " + filePartition);
+
+		if (file.exists()) {
+			file.delete();
+			COUNT++;
+		}
+
+		if (COUNT == (2 * numOfParts)) {
+			System.out.println("All files parts deleted successfully");
+			return -1;
+		}
+		return COUNT;
+	}
+
 	
 
 	public File createFile(InputStream fis, String filename) {
@@ -359,24 +559,28 @@ public class RequestHandler {
 			int high = count + perServer;
 			System.out.println("XXX");
 			for(int j = count; j < high; j++,count++){
-				result = client.sendPartition(fd, serverList.get(i),orgPartitions[j],j,num, username);
+				result = client.sendPartition(fd, serverList.get(i),orgPartitions[j],j+1,num, username);
 				if(result == 1){
-					System.out.println("Storing Original partition "+j+" on "+serverList.get(i)+" success");
+					System.out.println("Storing Original partition "+(j+1)+" on "+serverList.get(i)+" success");
 					//update master table
-					orgServerList.add(serverList.get(i));
+					if(!orgServerList.contains(serverList.get(i))){
+						orgServerList.add(serverList.get(i));
+					}
 				}else{
-					System.out.println("Storing Original partition "+j+" on "+serverList.get(i)+" failed");
+					System.out.println("Storing Original partition "+(j+1)+" on "+serverList.get(i)+" failed");
 				}
 			}
 		}
 		System.out.println("BBBB");
 		for(int j = count; j < num; j++){
-			result = client.sendPartition(fd, serverList.get(i-1),orgPartitions[j],j,num, username);
+			result = client.sendPartition(fd, serverList.get(i-1),orgPartitions[j],j+1,num, username);
 			if(result == 1){
-				System.out.println("Storing Original partition "+j+" on "+serverList.get(i-1)+" success");
-				orgServerList.add(serverList.get(i-1));
+				System.out.println("Storing Original partition "+(j+1)+" on "+serverList.get(i-1)+" success");
+				if(!orgServerList.contains(serverList.get(i-1))){
+					orgServerList.add(serverList.get(i-1));
+				}
 			}else{
-				System.out.println("Storing Original partition "+j+" on "+serverList.get(i-1)+" failed");
+				System.out.println("Storing Original partition "+(j+1)+" on "+serverList.get(i-1)+" failed");
 			}
 		}
 		
@@ -388,13 +592,15 @@ public class RequestHandler {
 			int high = count + perServer;
 			for(int j = count; j < high; j++,count++){
 				System.out.println("22222222");
-				result = client.sendPartition(fd, serverList.get(i),repPartitions[j],j,num, username);
+				result = client.sendPartition(fd, serverList.get(i),repPartitions[j],j+1,num, username);
 				if(result == 1){
-					System.out.println("Storing replicated partition "+j+" on "+serverList.get(i)+" success");
+					System.out.println("Storing replicated partition "+(j+1)+" on "+serverList.get(i)+" success");
 					//update master table
-					repServerList.add(serverList.get(i));
+					if(!repServerList.contains(serverList.get(i))){
+						repServerList.add(serverList.get(i));
+					}
 				}else{
-					System.out.println("Storing replicated partition "+j+" on "+serverList.get(i)+" failed");
+					System.out.println("Storing replicated partition "+(j+1)+" on "+serverList.get(i)+" failed");
 				}
 			}
 		}
@@ -402,16 +608,18 @@ public class RequestHandler {
 		System.out.println("count = "+count);
 		System.out.println("DDDD");
 		for(int j = count; j < num; j++){
-			result = client.sendPartition(fd, serverList.get(i+1),repPartitions[j],j,num, username);
+			result = client.sendPartition(fd, serverList.get(i+1),repPartitions[j],j+1,num, username);
 			if(result == 1){
-				System.out.println("Storing replicated partition "+j+" on "+serverList.get(i+1)+" success");
-				repServerList.add(serverList.get(i+1));
+				System.out.println("Storing replicated partition "+(j+1)+" on "+serverList.get(i+1)+" success");
+				if(!repServerList.contains(serverList.get(i+1))){
+					repServerList.add(serverList.get(i+1));
+				}
 			}else{
-				System.out.println("Storing replicated partition "+j+" on "+serverList.get(i+1)+" failed");
+				System.out.println("Storing replicated partition "+(j+1)+" on "+serverList.get(i+1)+" failed");
 			}
 		}
 		
-		master.addEntry(fd, orgServerList, repServerList);
+		master.addEntry(fd, filename, orgServerList, repServerList);
 		return 1;
 	}
 
@@ -445,11 +653,6 @@ public class RequestHandler {
 		}
 		
 		return addEntry(FD, filePartition, numOfParts, partitionNumber);
-	}
-	
-	
-	public void deletePartition(int FD) {
-		
 	}
 	
 	
@@ -490,7 +693,7 @@ public class RequestHandler {
 					
 					String currPartitions = tokens[2];
 					System.out.println("tokens2 = "+tokens[2]);
-					if(filename.contains("Original")){
+					if(filename.contains("original")){
 						currPartitions = currPartitions + " "+ partitionNumber+",O";
 					}else{
 						currPartitions = currPartitions + " "+ partitionNumber+",R";
@@ -511,7 +714,7 @@ public class RequestHandler {
 				//this is a new entry, just append it
 				
 				String entry ="";
-				if(filename.contains("Original")){
+				if(filename.contains("original")){
 					entry = FD+"\t"+numOfPartitions+"\t"+partitionNumber+",O";
 				}else{
 					entry = FD+"\t"+numOfPartitions+"\t"+partitionNumber+",R";
@@ -540,4 +743,39 @@ public class RequestHandler {
 	public void updateEntry(int FD, String filename, int numOfPartitions, int partitionNumber) {
 		
 	}
+	
+	public void deleteEntry(int FD){
+		
+		File file = new File(SERVER_TABLE);
+		
+		try{
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			
+			String line;
+			String[] tokens;
+			StringBuilder sb = new StringBuilder();
+			
+			while((line = br.readLine()) != null){
+				tokens = line.split("\t");
+				
+				if (FD != Integer.parseInt(tokens[0])) {
+					sb.append(line);
+					sb.append("\n");
+				}
+				
+			}
+			br.close();
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file,false));
+			bw.write(sb.toString());
+		    bw.close();
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+
+	
 }

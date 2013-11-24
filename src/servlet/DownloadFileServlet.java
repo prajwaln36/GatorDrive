@@ -74,6 +74,7 @@ public class DownloadFileServlet extends HttpServlet{
         
         Cookie[] cookies = request.getCookies();
         String username = "";
+        /*
         for(Cookie obj : cookies){
         	if(obj.getName().equals("username")){
         		username = obj.getValue();
@@ -84,12 +85,13 @@ public class DownloadFileServlet extends HttpServlet{
         	//username not present in cookies
         	//redirect to login page
         }
-        
+        */
         //just for testing
-        username = "gator";
+        username = "gators";
         
         RequestHandler reqHandler = new RequestHandler(username);
         
+        requestedFile = requestedFile.substring(1, requestedFile.length());
         int result = reqHandler.getFile(requestedFile);
         
         File file = null;

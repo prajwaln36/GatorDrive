@@ -9,6 +9,8 @@ import javax.swing.JOptionPane;
 
 public class Merge {
 
+	int FRG_FSIZE=1024;
+	
 	public File mergeFiles(InputStream[] files) {
 		try {
 			/*
@@ -19,12 +21,23 @@ public class Merge {
 			}
 			*/
 			File outFile = new File("/tmp/Temp.txt");
-
+			
+			if(!outFile.exists()){
+				outFile.createNewFile();
+			}
+			
 			FileOutputStream fileOS = new FileOutputStream(outFile);
-
+			
+			System.out.println("LENGTH = "+files.length);
+			for(int i = 0; i < files.length; i++){
+				if(files[i] == null){
+					System.out.println("is "+ i +" is null");
+				}
+			}
+				
 			for (int i = 0; i < files.length; i++) {
 				InputStream fileIS = files[i]; // new FileInputStream(files[i]);
-				byte[] data = new byte[(int) files[i].available()];
+				byte[] data = new byte[FRG_FSIZE];// [(int) files[i].available()];
 				int count = fileIS.read(data);
 				fileOS.write(data);
 				fileIS.close();
