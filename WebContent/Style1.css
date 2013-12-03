@@ -1,0 +1,158 @@
+@CHARSET "ISO-8859-1";
+
+body{
+margin:0;
+padding:0;
+//line-height: 1.5em;
+}
+
+b{font-size: 110%;}
+em{color: red;}
+
+#maincontainer{
+	font-size: 110%;
+	font-family: sans-serif;
+	font-style: oblique;
+	color: gray;
+	//overflow: hidden;
+	overflow: auto;
+	height : 100%;
+	width : 100%;
+}
+
+#maincontainer input{
+	height: 50px;
+    font-size: 22pt;
+}
+
+#maincontainer p{
+    font-size: 22pt;
+}
+
+#topsection{
+background: #EAEAEA;
+height: 25%; /*Height of top section*/
+width: 100%;
+}
+
+#topsection h1{
+margin: 0;
+padding-top: 15px;
+}
+
+#header_leftpane{
+	height: 25%;
+	width: 50%;
+}
+
+#header_rightpane{
+	height: 25%;
+	width: 50%;
+	margin-left: 50%; 	
+}
+
+#header_rightpane a{
+	color: gray;
+}
+
+#contentwrapper{
+		padding-top: 5%;
+float: left;
+width: 100%;
+padding-bottom: 5%;
+}
+
+#leftcolumn{
+float: left;
+width: 50%; /*Width of left column*/
+//margin-left: -100%;
+//background: #C8FC98;
+}
+
+#contentcolumn{
+margin-left: 50%; /*Set left margin to LeftColumnWidth*/
+}
+
+#button_tray{
+	
+}
+
+#footer{
+clear: left;
+width: 100%;
+background: black;
+color: white;
+text-align: center;
+padding: 4px 0;
+}
+
+#footer a{
+//color: #FFFF80;
+color: white;
+}
+
+.innertube{
+margin: 10px; /*Margins for inner DIV inside each column (to provide padding)*/
+margin-top: 0;
+}
+
+#content
+{
+   background-color: #f2f2f2;
+   padding: 20px 10px;
+   overflow: auto;
+}
+#tab-container
+{
+   float: left;
+   margin: 50px 0 0 0;
+   width: 126px;
+}
+#tab-container ul
+{
+   list-style: none;
+   text-align: center;
+}
+#tab-container ul li
+{
+   border-top: 1px solid #666;
+   border-right: 1px solid #666;
+   border-bottom: 1px solid #666;
+   border-left: 8px solid #666;
+   background-color: #ddd;
+   margin: 8px 0;
+}
+#tab-container ul li a,
+#tab-container ul li a:visited
+{
+   text-decoration: none;
+   color: #666;
+   display: block;
+   padding: 15px 5px;
+}
+#tab-container ul li:hover
+{
+   border-left: 8px solid #333;
+}
+#tab-container ul li a:hover
+{
+   color: #000;
+}
+#tab-container ul li.selected
+{
+   border-right: none;
+   background-color: #fff;
+   border-left: 8px solid #006699;
+}
+#main-container
+{
+   min-height: 1000px;
+   margin: 0 0 0 125px;
+   padding: 50px;
+   background-color: #fff;
+   border: 1px solid #888;
+}
+#main-container table{
+	height : 100%; 
+	width : 100%;
+}

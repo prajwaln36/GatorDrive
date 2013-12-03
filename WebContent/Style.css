@@ -1,0 +1,80 @@
+@CHARSET "ISO-8859-1";
+
+#container
+{
+	height: 100%;
+	width: 100%;
+	//overflow: hidden;
+}
+
+#header
+{
+	background-color: blue;
+	height: 25%;
+	width: 100%;
+}
+
+#header_leftpane
+{
+	background-color: yellow;
+	height: 25%;
+	width: 50%;
+	//float: left;
+    //margin-left: 0%;
+   // display: table-cell;	
+   display:inline-block;
+       vertical-align: top;
+}
+
+#header_rightpane
+{
+	padding-top: 2%;
+	background-color: red;
+	height: 25%;
+	width: 50%;
+	//float: right;
+	margin-left: 50%;
+	//display: table-cell;
+	display:inline-block;
+	    vertical-align: top;
+}
+
+#body
+{
+	background-color: aqua;
+	height: 50%;
+	width: 100%;
+}
+
+#body_leftpane
+{
+	//display: inline;
+	padding-top: 10%;
+	background-color: green;
+	height: 50%;
+	width: 50%;	
+	//float: left;
+	//display: table-cell;
+	display:inline-block;
+	    vertical-align: top;
+}
+
+#body_rightpane
+{
+	//padding-top: 5%;
+	background-color: orange;
+	height: 50%;
+	width: 50%;
+    //margin-left: 50%;  
+   // float: right;
+    //display:table-cell;
+	display:inline-block;    
+	    vertical-align: top;
+}
+
+#footer
+{
+	background-color: purple;
+	height: 25%;
+	width: 100%;
+}
